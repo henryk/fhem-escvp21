@@ -394,7 +394,6 @@ sub ESCVP21_ChangeSource($$)
   while( my ($key, $value) = each %table ) {
     if( lc($source) eq lc($value) ) {
       ESCVP21_Queue($hash,"SOURCE " . uc($key));
-      ESCVP21_QueueGet($hash,"SOURCE");
       $done = 1;
       last;
     }
@@ -403,11 +402,14 @@ sub ESCVP21_ChangeSource($$)
   unless($done) {
     if($source =~ /[0-9a-f]{2}/i) {
       ESCVP21_Queue($hash,"SOURCE " . uc($source));
-      ESCVP21_QueueGet($hash,"SOURCE");
       $done = 1;
     }
   }
 
+  if($done) {
+    ESCVP21_QueueGet($hash,"SOURCE");
+    ESCVP21_QueueGet($hash,"MUTE");
+  }
 }
 
 sub ESCVP21_QueueGet($$)
