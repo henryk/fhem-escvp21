@@ -316,7 +316,7 @@ sub ESCVP21_Set($@)
   my ($do_mute, $do_unmute) = (0,0);
 
   if($cmd eq 'mute') {
-    if($#args == 0) {
+    if($#args == -1) {
       if(defined($hash->{READINGS}{MUTE})) {
 	if($hash->{READINGS}{MUTE}{VAL} eq "OFF") {
 	  $do_mute = 1;
