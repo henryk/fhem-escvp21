@@ -181,7 +181,7 @@ sub ESCVP21_ArmWatchdog($)
     }
 
     Log 5, "ESCVP21_ArmWatchdog: Watchdog armed for $timeout seconds";
-    InternalTimer($time + $timeout, "ESCVP21_Watchdog", "watchdog:".$name, 1);
+    InternalTimer($time + $timeout, "ESCVP21_Watchdog", "watchdog:".$name, 0);
   }
 }
 
@@ -289,7 +289,7 @@ sub ESCVP21_GetStatus($)
   
   # Only queue commands when the queue is empty, otherwise, try again in a few seconds
   if(!$hash->{CommandQueue}) {
-    InternalTimer(gettimeofday()+$hash->{Timer}, "ESCVP21_GetStatus_t", "getStatus:".$name, 1);
+    InternalTimer(gettimeofday()+$hash->{Timer}, "ESCVP21_GetStatus_t", "getStatus:".$name, 0);
 
     ESCVP21_QueueGet($hash,"VOL");
     ESCVP21_QueueGet($hash,"SOURCE");
@@ -299,7 +299,7 @@ sub ESCVP21_GetStatus($)
     ESCVP21_QueueGet($hash,"LAMP");
     ESCVP21_QueueGet($hash,"ERR");
   } else {
-    InternalTimer(gettimeofday()+5, "ESCVP21_GetStatus_t", "getStatus:".$name, 1);
+    InternalTimer(gettimeofday()+5, "ESCVP21_GetStatus_t", "getStatus:".$name, 0);
   }
 }
 
