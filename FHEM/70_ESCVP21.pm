@@ -353,6 +353,8 @@ sub ESCVP21_Set($@)
       ESCVP21_QueueGet($hash,"PWR");
     }
 
+  } elsif($cmd eq '?') {
+    return "Unknown argument ?, choose one of on off mute";
   }
   
 }
