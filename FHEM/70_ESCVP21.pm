@@ -94,7 +94,7 @@ sub ESCVP21_Initialize($$)
   $hash->{ReadFn}   = "ESCVP21_Read";  
   $hash->{ReadyFn}  = "ESCVP21_Ready";
   $hash->{UndefFn}  = "ESCVP21_Undefine";
-  $hash->{AttrList} = "TIMER";  # FIXME, are these needed or are they implicit? "event-on-update-reading event-on-change-reading stateFormat webCmd"
+  $hash->{AttrList} = "TIMER";  # FIXME, are these needed or are they implicit? "event-on-update-reading event-on-change-reading stateFormat webCmd devStateIcon"
   $hash->{fhem}{interfaces} = "switch_passive;switch_active";
   
 }
@@ -120,6 +120,7 @@ sub ESCVP21_Define($$)
   my %table = ESCVP21_SourceTable($hash);
   $hash->{SourceTable} = \%table;
   $attr{$hash->{NAME}}{webCmd} = "on:off:input";
+  $attr{$hash->{NAME}}{devStateIcon} = "on-.*:on:off mute-.*:muted:mute off-.*:off:on";
 
   my $dev;
   my $baudrate;
@@ -400,8 +401,8 @@ sub ESCVP21_ChangeSource($$)
   }
 
   unless($done) {
-    if($source =~ /[0-9a-f]{2}/i) {
-      ESCVP21_Queue($hash,"SOURCE " . uc($source));
+    if($source =~ /([0-9a-f]{2})(-unknown)?/i) {
+      ESCVP21_Queue($hash,"SOURCE " . uc($1));
       $done = 1;
     }
   }
@@ -472,7 +473,7 @@ sub ESCVP21_UpdateState($)
   my ($hash) = @_;
   my $state = undef;
   my $onoff = 0;
-  my $source = $hash->{READINGS}{SOURCE}{VAL} . "-unknown";
+  my $source = "unknown";
   my %table = %{$hash->{SourceTable}};
 
   # If it's on or powering up, consider it on
@@ -487,18 +488,20 @@ sub ESCVP21_UpdateState($)
     $state = "off";
     $onoff = 0;
   }
-  
-  while( my ($key, $value) = each %table ) {
-    if( lc($hash->{READINGS}{SOURCE}{VAL}) eq lc($key) ) {
-      $source = $value;
-      last;
+
+  if(defined($hash->{READINGS}{SOURCE})){
+    $source = $hash->{READINGS}{SOURCE}{VAL} . "-unknown";
+    while( my ($key, $value) = each %table ) {
+      if( lc($hash->{READINGS}{SOURCE}{VAL}) eq lc($key) ) {
+	$source = $value;
+	last;
+      }
     }
   }
-  
 
-  readingsBulkUpdate($hash, "state", $state);
+  readingsBulkUpdate($hash, "state", $state . "-" . $source);
   readingsBulkUpdate($hash, "onoff", $onoff);
-  readingsBulkUpdate($hash, "source", $source) unless $source eq "-unknown";
+  readingsBulkUpdate($hash, "source", $source) unless $source eq "unknown";
 }
 
 sub ESCVP21_SourceTable($)
