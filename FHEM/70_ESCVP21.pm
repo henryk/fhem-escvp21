@@ -379,7 +379,7 @@ sub ESCVP21_Set($@)
   if($do_mute) {
     ESCVP21_Queue($hash,"muteOn");
     ESCVP21_QueueGet($hash,"MUTE");
-  } elsif($do_unmute)
+  } elsif($do_unmute) {
     ESCVP21_Queue($hash,"muteOff");
     ESCVP21_QueueGet($hash,"MUTE");
   }
