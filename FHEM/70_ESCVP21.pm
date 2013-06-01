@@ -285,6 +285,8 @@ sub ESCVP21_GetStatus($)
   my ($hash) = @_;
   my $name = $hash->{NAME};
 
+  Log 5, "ESCVP21_GetStatus called for $name";
+
   RemoveInternalTimer("getStatus:".$name);
   
   # Only queue commands when the queue is empty, otherwise, try again in a few seconds
