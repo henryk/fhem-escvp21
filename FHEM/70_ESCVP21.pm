@@ -119,7 +119,7 @@ sub ESCVP21_Define($$)
 
   my %table = ESCVP21_SourceTable($hash);
   $hash->{SourceTable} = \%table;
-  $attr{$hash->{NAME}}{webCmd} = "on:off:mute";
+  $attr{$hash->{NAME}}{webCmd} = "on:off:input";
 
   my $dev;
   my $baudrate;
@@ -312,12 +312,26 @@ sub ESCVP21_Set($@)
 
   Log 5, "ESCVP21_Set: $cmd";
 
+  my ($do_mute, $do_unmute) = (0,0);
+
   if($cmd eq 'mute') {
-    ESCVP21_Queue($hash,"muteOn");
-    ESCVP21_QueueGet($hash,"MUTE");
-  } elsif($cmd eq 'unmute') {
-    ESCVP21_Queue($hash,"muteOff");
-    ESCVP21_QueueGet($hash,"MUTE");
+    if($#args == -1) {
+      if(defined($hash->{READINGS}{MUTE})) {
+	if($hash->{READINGS}{MUTE}{VAL} eq "OFF") {
+	  $do_mute = 1;
+	} else {
+	  $do_unmute = 1;
+	}
+      } else {
+	$do_mute = 1;
+      }
+    } else {
+      if($args[0] eq 'on') {
+	$do_mute = 1;
+      } elsif($args[0] eq 'off') {
+	$do_unmute = 1;
+      }
+    }
   } elsif($cmd eq 'on') {
     ESCVP21_Queue($hash,"powerOn");
     ESCVP21_QueueGet($hash,"PWR");
@@ -326,8 +340,12 @@ sub ESCVP21_Set($@)
     ESCVP21_QueueGet($hash,"PWR");
   } elsif($cmd eq 'raw') {
     ESCVP21_Queue($hash,join(" ", @args));
-  } elsif($cmd eq 'source') {
-    ESCVP21_ChangeSource($hash, $args[0]);
+  } elsif($cmd eq 'input') {
+    if($args[0] eq 'MUTE') {
+      $do_mute = 1;
+    } else {
+      ESCVP21_ChangeSource($hash, $args[0]);
+    }
   } elsif($cmd =~ /^([^-]+)-(.*)$/) {
     my ($on,$muted) = (0,0);
     ($on, $muted) = (1, 0) if $1 eq 'on';
@@ -341,11 +359,9 @@ sub ESCVP21_Set($@)
       ESCVP21_ChangeSource($hash, $2);
 
       if($muted) {
-	ESCVP21_Queue($hash,"muteOn");
-	ESCVP21_QueueGet($hash,"MUTE");
+	$do_mute = 1;
       } else {
-	ESCVP21_Queue($hash,"muteOff");
-	ESCVP21_QueueGet($hash,"MUTE");
+	$do_unmute = 1;
       }
 
     } else {
@@ -354,9 +370,20 @@ sub ESCVP21_Set($@)
     }
 
   } elsif($cmd eq '?') {
-    return "Unknown argument ?, choose one of on off mute";
+    my %table = %{$hash->{SourceTable}};
+    my @inputs = ("MUTE",);
+    push @inputs, $table{$_} foreach (sort keys %table);
+    return "Unknown argument ?, choose one of on off mute input:" . join(",",@inputs);
   }
   
+  if($do_mute) {
+    ESCVP21_Queue($hash,"muteOn");
+    ESCVP21_QueueGet($hash,"MUTE");
+  } elsif($do_unmute) {
+    ESCVP21_Queue($hash,"muteOff");
+    ESCVP21_QueueGet($hash,"MUTE");
+  }
+
 }
 
 sub ESCVP21_ChangeSource($$)
@@ -592,19 +619,17 @@ sub ESCVP21_Command($$)
     <li>off<br>
 	Switch the projector off.
 	</li><br>
-    <li>mute<br>
+    <li>mute [on|off]<br>
 	'Mute' the projector output, e.g. display a black screen.
+	If no argument is given, the mute state will be toggled.
 	</li><br>
-    <li>unmute<br>
-	'Unmute' the projector output.
-        </li><br>
-    <li>source &lt;source&gt;.<br>
+    <li>input &lt;source&gt;.<br>
 	Switch the projector input source. The names are the same as
 	reported by the 'source' reading, so if in doubt look there.
 	A raw two character hex code may also be specified.
 	</li><br>
     <li>&lt;state&gt;-&lt;source&gt;<br>
-	Switch state ("on", "off" or "mute" and source in one command.
+	Switch state ("on", "off" or "mute") and source in one command.
 	The source is ignored if the new state is off.
 	</li><br>
 
