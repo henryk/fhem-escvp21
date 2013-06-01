@@ -94,7 +94,7 @@ sub ESCVP21_Initialize($$)
   $hash->{ReadFn}   = "ESCVP21_Read";  
   $hash->{ReadyFn}  = "ESCVP21_Ready";
   $hash->{UndefFn}  = "ESCVP21_Undefine";
-  $hash->{AttrList} = "TIMER event-on-update-reading event-on-change-reading stateFormat";
+  $hash->{AttrList} = "TIMER";  # FIXME, are these needed or are they implicit? "event-on-update-reading event-on-change-reading stateFormat webCmd"
   $hash->{fhem}{interfaces} = "switch_passive;switch_active";
   
 }
@@ -119,6 +119,7 @@ sub ESCVP21_Define($$)
 
   my %table = ESCVP21_SourceTable($hash);
   $hash->{SourceTable} = \%table;
+  $attr{$hash->{NAME}}{webCmd} = "on:off:mute";
 
   my $dev;
   my $baudrate;
