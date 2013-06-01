@@ -590,7 +590,7 @@ sub ESCVP21_Command($$)
       connected devices (both USB projector or serial projector using USB-serial
       converter). The numbers may differ, check your kernel log (using the dmesg
       command) soon after connecting the USB cable. Many distributions also offer
-      a consistent naming in /dev/serial/by-id/, check there.
+      a consistent naming in /dev/serial/by-id/, check there.<br><br>
 
       You can also specify a baudrate if the device name contains the @
       character, e.g.: /dev/ttyACM0@9600, though this should usually always
@@ -665,4 +665,112 @@ sub ESCVP21_Command($$)
 </ul>
 
 =end html
+=begin html_DE
+
+<a name="ESCVP21"></a>
+<h3>ESCVP21</h3>
+<ul>
+
+  Viele EPSON-Projektoren sind mit einem Anschluss f&uuml;r die Fernbedienung von einem
+  Computer ausgestattet. Das ist entweder ein serieller Anschluss (RS-232), ein 
+  USB-Anschluss, oder ein Ethernet-Anschluss. Das verwendete Protokoll ist h&auml;ufig
+  ESC/VP21. Dieses Modul unterst&uuml;tzt grundlegende Steuerungsfunktionen des Projektors
+  &uuml;ber ESC/VP21 f&uuml;r Projektoren mit USB- (ungestet) und RS/232-Anschluss. Das
+  Netzwerkprotokoll ist &auml;hnlich und k&ouml;nnte evt. in der Zukunft unterst&uuml;tzt werden.
+
+  <a name="ESCVP21define"></a>
+  <b>Define</b>
+  <ul>
+    <code>define &lt;name&gt; ESCVP21 &lt;device&gt; [&lt;model&gt; [&lt;timer&gt;]]</code> <br>
+    <br>
+    Per USB oder seriell angeschlossene Ger&auml;te:<br><ul>
+      &lt;device&gt; gibt den seriellen Port an, an dem der Projektor angeschlossen
+      ist. Der Name des Ports h&auml;ngt vom Betriebssystem bzw. der Distribution un
+      anderen Faktoren ab. Unter Linux ist es h&auml;ufig etwas &auml;hnliches wie /dev/ttyS0
+      bei einem fest installierten seriellen Anschluss, oder /dev/ttyUSB0 oder
+      /dev/ttyACM0 bei einem per USB angeschlossenem Ger&auml;t (entweder der Projektor
+      &uuml;ber USB, oder ein serieller Projektor mit einem USB-RS-232-Wandler). Die
+      Zahl kann abweichen, genaue Angaben sollten im Kernel-Log zu finden sein (mit
+      dem dmesg-Befehl anzusehen), nachdem das USB-Kabel verbunden wurde. Viele
+      Distributionen bieten ausserdem ein konsistentes Namensschema (&uuml;ber symlinks)
+      in /dev/serial/by-id/ an.<br><br>
+      
+      Zus&auml;tzlich kann eine Baudrate angegeben werden, durch Verwendung des @-Zeichens
+      in der device-Angabe, z.B. /dev/ttyACM0@9600. Das sollte allerdings eigentlich
+      immer 9600 sein.<br><br>
+
+      Wenn die Baudrate als "directio" angegeben wird (z.B. /dev/ttyACM0@directio),
+      dann wird das Perl-Modul Device::SerialPort nicht ben&ouml;tigt und fhem spricht
+      das Ger&auml;t mit einfacher Datei-I/O an. Das kann funktionieren, wenn das
+      Betriebssystem sinnvolle Standardwerte f&uuml;r die seriellen Parameter verwendet,
+      z.B. unter einigen Linux-Distributionen und OSX.<br><br>
+
+    </ul>
+    Per Netzwerk angeschlossene Ger&auml;te:<br><ul>
+    Zur Zeit nicht unterst&uuml;tzt
+    </ul>
+    <br>
+
+    Wenn der Modellname angegeben wird (majuskelignorant, ohne das Pr&auml;fix "emp-"
+    oder "eh-"), wird er benutzt, um die Liste der Eing&auml;nge auf die tats&auml;chlich
+    vorhandenen zu reduzieren (falls bekannt) und unter Umst&auml;nden auch, um manche
+    Eing&auml;nge auf bessere Namen umzubenennen. Wenn das Projektormodell nicht
+    angegeben wird, wird standardm&auml;&szlig;ig "unknown" angenommen.<br><br>
+
+
+    Der Projektor wird von einem internen Timer regelm&auml;&szlig;ig nach Status&auml;nderungen
+    gepollt. Die Zeit zwischen zwei Abfragen, in Sekunden, wird mit dem optionalen
+    timer-Argument angegeben. Wenn es nicht spezifiziert wird, wird standardm&auml;&szlig;ig
+    30 angenommen.<br><br>
+
+    Beispiele:
+    <ul>
+      <code>define Beamer_Wohnzimmer ESCVP21 /dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller_D-if00-port0 tw3000</code><br>
+    </ul>
+
+
+  </ul>
+  <br>
+
+  <a name="ESCVP21set"></a>
+  <b>Set </b>
+  <ul>
+    <li>on<br>
+	Schaltet den Projektor an.
+	</li><br>
+    <li>off<br>
+	Schaltet den Projektor aus.
+	</li><br>
+    <li>mute [on|off]<br>
+	Abschalten der Ausgabe, also zum Beispiel durch Anzeigen eines
+	schwarzen Bildschirms.
+	Wenn kein Argument angegeben wird, wird der Abschaltungszustand
+	invertiert.
+	</li><br>
+    <li>input &lt;source&gt;.<br>
+	&Auml;ndern des Projektoreingangs. Die Namen stammen aus der Dokumentation
+	und sind dieselben die im "source"-Reading ausgegeben werden.
+	Der Eingang kann auch direkt als zwei-Zeichen Hexcode angegeben werden.
+	</li><br>
+    <li>&lt;state&gt;-&lt;source&gt;<br>
+	&Auml;ndert den Projektorzustand ("on", "off", oder "mute") und den
+	gew&auml;hlten Eingang in einem einzigen Kommando. Der Eingang wird
+	ignoriert, wenn der neue Zustand "off" ist.
+	</li><br>
+
+  </ul>
+
+  <a name="ESCVP21get"></a>
+  <b>Get</b>
+  <ul>N/A</ul>
+
+  <a name="ESCVP21attr"></a>
+  <b>Attributes</b>
+  <ul>
+    <li><a href="#readingFnAttributes">readingFnAttributes</a></li>
+  </ul>
+  <br>
+</ul>
+
+=end html_DE
 =cut
