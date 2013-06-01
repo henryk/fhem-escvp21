@@ -121,7 +121,7 @@ sub ESCVP21_Define($$)
   my %table = ESCVP21_SourceTable($hash);
   $hash->{SourceTable} = \%table;
   $attr{$hash->{NAME}}{webCmd} = "on:off:input";
-  $attr{$hash->{NAME}}{devStateIcon} = "on-.*:on:off mute-.*:muted:mute off-.*:off:on";
+  $attr{$hash->{NAME}}{devStateIcon} = "on-.*:on:off mute-.*:muted:mute off:off:on";
 
   my $dev;
   my $baudrate;
@@ -482,19 +482,6 @@ sub ESCVP21_UpdateState($)
   my $source = "unknown";
   my %table = %{$hash->{SourceTable}};
 
-  # If it's on or powering up, consider it on
-  if($hash->{READINGS}{PWR}{VAL} eq '01' or $hash->{READINGS}{PWR}{VAL} eq '02') {
-    if($hash->{READINGS}{MUTE}{VAL} eq 'ON') {
-      $state = "mute";
-    } else {
-      $state = "on";
-    }
-    $onoff = 1;
-  } else {
-    $state = "off";
-    $onoff = 0;
-  }
-
   if(defined($hash->{READINGS}{SOURCE})){
     $source = $hash->{READINGS}{SOURCE}{VAL} . "-unknown";
     while( my ($key, $value) = each %table ) {
@@ -505,7 +492,21 @@ sub ESCVP21_UpdateState($)
     }
   }
 
-  readingsBulkUpdate($hash, "state", $state . "-" . $source);
+  # If it's on or powering up, consider it on
+  if($hash->{READINGS}{PWR}{VAL} eq '01' or $hash->{READINGS}{PWR}{VAL} eq '02') {
+    if($hash->{READINGS}{MUTE}{VAL} eq 'ON') {
+      $state = "mute";
+    } else {
+      $state = "on";
+    }
+    $onoff = 1;
+    $state = $state . "-" . $source;
+  } else {
+    $state = "off";
+    $onoff = 0;
+  }
+
+  readingsBulkUpdate($hash, "state", $state);
   readingsBulkUpdate($hash, "onoff", $onoff);
   readingsBulkUpdate($hash, "source", $source) unless $source eq "unknown";
 }
