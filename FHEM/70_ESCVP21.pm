@@ -105,16 +105,17 @@ sub ESCVP21_Define($$)
   DevIo_CloseDev($hash);
   my @args = split("[ \t]+", $def);
   if (int(@args) < 2) {
-    return "Invalid number of arguments: define <name> ESCVP21 <port> [<model>]";
+    return "Invalid number of arguments: define <name> ESCVP21 <port> [<model> [<timer>]]";
   }
 
-  my ($name, $type, $port, $model) = @args;
+  my ($name, $type, $port, $model, $timer) = @args;
   $model = "unknown" unless defined $model;
-  $attr{$hash->{NAME}}{TIMER}=30;
+  $timer = 30 unless defined $timer;
   $hash->{Model} = lc($model);
   $hash->{DeviceName} = $port;
   $hash->{CommandQueue} = '';
   $hash->{ActiveCommand} = '';
+  $hash->{Timer} = $timer;
   $hash->{STATE} = 'Initialized';
 
   my %table = ESCVP21_SourceTable($hash);
@@ -138,6 +139,9 @@ sub ESCVP21_Ready($)
 sub ESCVP21_Undefine($$) 
 {
   my ($hash,$arg) = @_;
+  my $name = $hash->{NAME};
+  RemoveInternalTimer("watchdog:".$name);
+  RemoveInternalTimer("getStatus:".$name);
   DevIo_CloseDev($hash); 
   return undef;
 }
@@ -285,7 +289,7 @@ sub ESCVP21_GetStatus($)
   
   # Only queue commands when the queue is empty, otherwise, try again in a few seconds
   if(!$hash->{CommandQueue}) {
-    InternalTimer(gettimeofday()+$attr{$hash->{NAME}}{TIMER}, "ESCVP21_GetStatus_t", "getStatus:".$name, 1);
+    InternalTimer(gettimeofday()+$hash->{Timer}, "ESCVP21_GetStatus_t", "getStatus:".$name, 1);
 
     ESCVP21_QueueGet($hash,"VOL");
     ESCVP21_QueueGet($hash,"SOURCE");
@@ -573,7 +577,7 @@ sub ESCVP21_Command($$)
   <a name="ESCVP21define"></a>
   <b>Define</b>
   <ul>
-    <code>define &lt;name&gt; ESCVP21 &lt;device&gt; [&lt;model&gt;]</code> <br>
+    <code>define &lt;name&gt; ESCVP21 &lt;device&gt; [&lt;model&gt; [&lt;timer&gt;]]</code> <br>
     <br>
     USB or serial devices-connected devices:<br><ul>
       &lt;device&gt; specifies the serial port to communicate with the projector.
@@ -601,10 +605,15 @@ sub ESCVP21_Command($$)
     </ul>
     <br>
 
-    If a model name is specified (case insensitive, without the "emp-" prefix),
-    it is used to limit the possible input source values to the ones supported
-    by the projector (if known) and may be used to map certain source values
-    to better symbolic names.
+    If a model name is specified (case insensitive, without the "emp-" or "eh-"
+    prefix), it is used to limit the possible input source values to the ones
+    supported by the projector (if known) and may be used to map certain source
+    values to better symbolic names. If the model name isn't specified it defaults
+    to "unknown".
+
+    The projector must be queried for readings changes, and the time between
+    queries in seconds is specified by the optional timer argument. If it isn't
+    specified it defaults to 30.
 
     Examples:
     <ul>
@@ -647,10 +656,6 @@ sub ESCVP21_Command($$)
   <a name="ESCVP21attr"></a>
   <b>Attributes</b>
   <ul>
-    <li>TIMER<br>
-	The projector must be queried for readings changes, and this attribute
-	specifies the number of seconds between queries.
-        </li><br>
     <li><a href="#readingFnAttributes">readingFnAttributes</a></li>
   </ul>
   <br>
