@@ -218,7 +218,7 @@ sub ESCVP21_Read($)
     # When we get a state response, update the corresponding reading
     if($line =~ /([^=]+)=([^=]+)/) {
       readingsBeginUpdate($hash);
-      readingsBulkUpdate($hash, $1, $2);
+      readingsBulkUpdate($hash, $1, $2) unless $hash->{READINGS}{$1}{VAL} eq $2;
       ESCVP21_UpdateState($hash);
       readingsEndUpdate($hash, 1);
     }
@@ -506,9 +506,9 @@ sub ESCVP21_UpdateState($)
     $onoff = 0;
   }
 
-  readingsBulkUpdate($hash, "state", $state);
-  readingsBulkUpdate($hash, "onoff", $onoff);
-  readingsBulkUpdate($hash, "source", $source) unless $source eq "unknown";
+  readingsBulkUpdate($hash, "state", $state) unless $hash->{READINGS}{state}{VAL} eq $state;
+  readingsBulkUpdate($hash, "onoff", $onoff) unless $hash->{READINGS}{onoff}{VAL} eq $onoff;
+  readingsBulkUpdate($hash, "source", $source) unless $source eq "unknown" or $hash->{READINGS}{source}{VAL} eq $source;
 }
 
 sub ESCVP21_SourceTable($)
